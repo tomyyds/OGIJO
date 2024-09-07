@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>OGIJO燃油消耗率 天燃气替代率快捷计算</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('The_Starry_Night.jpg') no-repeat center center fixed;
+            background-size: cover;
+            filter: blur(0.1px); /* 调低高斯模糊 */
+            z-index: -1;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            z-index: 1;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .result p {
+            margin: 5px 0;
+        }
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="container">
+        <h1>OGIJO燃油消耗率 天燃气替代率快捷计算</h1>
+        <label for="totalGeneration">总发电量 (kWh):</label>
+        <input type="number" id="totalGeneration" oninput="calculate()" required>
+        <label for="heavyOilConsumption">黑油消耗量 (L):</label>
+        <input type="number" id="heavyOilConsumption" oninput="calculate()" required>
+        <label for="dieselConsumption">柴油消耗量 (L):</label>
+        <input type="number" id="dieselConsumption" oninput="calculate()" required>
+        <label for="gasConsumption">天然气消耗量 (scf):</label>
+        <input type="number" id="gasConsumption" oninput="calculate()">
+        <div class="result">
+            <h2>结果:</h2>
+            <p>燃油消耗率: <span id="fuelRateL"></span> L/kWh, <span id="fuelRateG"></span> g/kWh</p>
+            <p>天然气消耗率: <span id="gasRateM3"></span> m³/kWh, <span id="gasRateKg"></span> kg/kWh</p>
+            <p>燃油发电量: <span id="fuelGeneration"></span> kWh</p>
+            <p>天然气发电量: <span id="gasGeneration"></span> kWh</p>
+            <p>天然气替代率: <span id="gasPercentage"></span> %</p>
+            <p>天然气总立方: <span id="gasTotalCubic"></span> m³</p>
+            <p>天然气总量: <span id="gasTotalKg"></span> kg</p>
+            <p>燃油总消耗: <span id="totalFuelConsumption"></span> L</p>
+        </div>
+    </div>
+    <div class="footer">By: huz</div>
+
+    <script>
+        function calculate() {
+            var totalGeneration = parseFloat(document.getElementById('totalGeneration').value) || 0;
+            var heavyOilConsumption = parseFloat(document.getElementById('heavyOilConsumption').value) || 0;
+            var dieselConsumption = parseFloat(document.getElementById('dieselConsumption').value) || 0;
+            var gasConsumption = parseFloat(document.getElementById('gasConsumption').value) || 0;
+
+            // 天然气消耗量从scf转换为立方米 (1 scf = 0.0283168 立方米)
+            var gasConsumptionCubicMeters = gasConsumption * 0.0283168;
+
+            // 计算天然气的总量 (kg)
+            var gasTotalKg = gasConsumptionCubicMeters * 0.717; // 假设天然气密度为0.717 kg/m³
+
+            // 计算燃油和天然气的发电量
+            var gasGeneration = gasConsumptionCubicMeters * 3.2;
+            var fuelGeneration = totalGeneration - gasGeneration;
+
+            // 计算燃油消耗总量 (L)
+            var fuelConsumption = heavyOilConsumption + dieselConsumption;
+
+            // 计算燃油和天然气的消耗率
+            var fuelRateL = fuelGeneration > 0 ? (fuelConsumption / fuelGeneration) : 0;
+            var fuelRateG = fuelGeneration > 0 ? (fuelConsumption * 900 / fuelGeneration) : 0; // 1L = 1000g, 0.9kg = 900g
+            var gasRateM3 = gasGeneration > 0 ? (gasConsumptionCubicMeters / gasGeneration) : 0;
+            var gasRateKg = gasGeneration > 0 ? (gasTotalKg / gasGeneration) : 0;
+
+            // 计算天然气替代率
+            var gasPercentage = totalGeneration > 0 ? (gasGeneration / totalGeneration) * 100 : 0;
+
+            // 显示结果
+            document.getElementById('fuelRateL').innerText = fuelRateL.toFixed(2);
+            document.getElementById('fuelRateG').innerText = fuelRateG.toFixed(2);
+            document.getElementById('gasRateM3').innerText = gasRateM3.toFixed(2);
+            document.getElementById('gasRateKg').innerText = gasRateKg.toFixed(2);
+            document.getElementById('fuelGeneration').innerText = fuelGeneration.toFixed(2);
+            document.getElementById('gasGeneration').innerText = gasGeneration.toFixed(2);
+            document.getElementById('gasPercentage').innerText = gasPercentage.toFixed(2);
+            document.getElementById('gasTotalCubic').innerText = gasConsumptionCubicMeters.toFixed(2);
+            document.getElementById('gasTotalKg').innerText = gasTotalKg.toFixed(2);
+            document.getElementById('totalFuelConsumption').innerText = fuelConsumption.toFixed(2);
+        }
+    </script>
+</body>
+</html>
